@@ -35,6 +35,63 @@ uploads/            # Local file storage (gitignored contents)
 
 Concerns are separated: routes → controllers → services. Simulated processing lives in `processingService` and never blocks the HTTP response.
 
+## Database schema & relationships
+
+One **asset** can have many **jobs** (1:N). Deleting an asset cascades to its jobs (`ON DELETE CASCADE`).
+
+```mermaid
+erDiagram
+    assets ||--o{ jobs : "has"
+
+    assets {
+        uuid id PK
+        text original_name
+        text mime_type
+        bigint size_bytes
+        text storage_path
+        timestamptz created_at
+    }
+
+    jobs {
+        uuid id PK
+        uuid asset_id FK
+        text operation
+        text status
+        text error_message
+        timestamptz created_at
+        timestamptz completed_at
+    }
+```
+
+```
+┌──────────────────────────────┐
+│            assets            │
+├──────────────────────────────┤
+│ id (PK, UUID)                │
+│ original_name                │
+│ mime_type                    │
+│ size_bytes                   │
+│ storage_path                 │
+│ created_at                   │
+└──────────────┬───────────────┘
+               │ 1
+               │
+               │ N
+┌──────────────▼───────────────┐
+│             jobs             │
+├──────────────────────────────┤
+│ id (PK, UUID)                │
+│ asset_id (FK → assets.id)    │
+│ operation                    │  transcription | noise_reduction
+│ status                       │  queued → processing → completed | failed
+│ error_message                │
+│ created_at                   │
+│ completed_at                 │
+└──────────────────────────────┘
+```
+
+Migrations live in `migrations/` (`npm run migrate`).
+
 ## Prerequisites
 
 - Node.js 18+
