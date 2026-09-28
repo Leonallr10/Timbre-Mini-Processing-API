@@ -1,0 +1,116 @@
+{
+  "info": {
+    "name": "Timbre Mini Processing API",
+    "description": "Upload media assets and run simulated processing jobs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "assetId",
+      "value": ""
+    },
+    {
+      "key": "jobId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "Upload asset",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "  const body = pm.response.json();",
+              "  pm.collectionVariables.set('assetId', body.id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/assets"
+      }
+    },
+    {
+      "name": "Get asset",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/assets/{{assetId}}"
+      }
+    },
+    {
+      "name": "Start processing (transcription)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 202) {",
+              "  const body = pm.response.json();",
+              "  pm.collectionVariables.set('jobId', body.id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operation\": \"transcription\"\n}"
+        },
+        "url": "{{baseUrl}}/assets/{{assetId}}/process"
+      }
+    },
+    {
+      "name": "Get job",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/jobs/{{jobId}}"
+      }
+    },
+    {
+      "name": "List jobs for asset",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/assets/{{assetId}}/jobs"
+      }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "timbre-mini-processing-api",
+  "version": "1.0.0",
+  "description": "Timbre Mini Processing API — Backend Engineering Intern Assignment",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "migrate": "node src/db/migrate.js",
+    "migrate:down": "node src/db/migrate.js --down",
+    "setup:db": "node scripts/setup-db.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "timbre",
+    "express",
+    "postgresql",
+    "multipart"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "multer": "^2.4.0",
+    "pg": "^8.13.1",
+    "uuid": "^11.0.5"
+  }
+}

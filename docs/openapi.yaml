@@ -1,0 +1,258 @@
+openapi: 3.0.3
+info:
+  title: Timbre Mini Processing API
+  description: |
+    Backend API for uploading media assets and running simulated processing jobs
+    (transcription, noise reduction).
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /assets:
+    post:
+      summary: Upload a media asset
+      description: Accepts an audio or video file via multipart/form-data.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Asset created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Asset"
+        "400":
+          description: Missing file, unsupported type, or file too large
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /assets/{assetId}:
+    get:
+      summary: Get asset metadata
+      parameters:
+        - $ref: "#/components/parameters/AssetId"
+      responses:
+        "200":
+          description: Asset metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Asset"
+        "400":
+          description: Invalid asset ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /assets/{assetId}/process:
+    post:
+      summary: Start a processing job
+      description: |
+        Creates a job with status `queued` and returns immediately.
+        Processing continues asynchronously: queued → processing → completed.
+      parameters:
+        - $ref: "#/components/parameters/AssetId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - operation
+              properties:
+                operation:
+                  type: string
+                  enum: [transcription, noise_reduction]
+                  example: transcription
+      responses:
+        "202":
+          description: Job accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "400":
+          description: Invalid asset ID or unsupported operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /assets/{assetId}/jobs:
+    get:
+      summary: List jobs for an asset
+      parameters:
+        - $ref: "#/components/parameters/AssetId"
+      responses:
+        "200":
+          description: Job list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Job"
+        "400":
+          description: Invalid asset ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /jobs/{jobId}:
+    get:
+      summary: Get processing job status
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "400":
+          description: Invalid job ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  parameters:
+    AssetId:
+      name: assetId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    Asset:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        originalName:
+          type: string
+          example: interview.mp4
+        mimeType:
+          type: string
+          example: video/mp4
+        sizeBytes:
+          type: integer
+          example: 1048576
+        storagePath:
+          type: string
+          example: uploads/a1b2c3d4-....mp4
+        createdAt:
+          type: string
+          format: date-time
+
+    Job:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        assetId:
+          type: string
+          format: uuid
+        operation:
+          type: string
+          enum: [transcription, noise_reduction]
+        status:
+          type: string
+          enum: [queued, processing, completed, failed]
+        errorMessage:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+            details:
+              nullable: true
+            code:
+              type: string
+              description: Present for Multer limit errors
