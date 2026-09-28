@@ -1,7 +1,8 @@
 {
   "info": {
+    "_postman_id": "timbre-mini-processing-api",
     "name": "Timbre Mini Processing API",
-    "description": "Upload media assets and run simulated processing jobs.",
+    "description": "Upload media assets and run simulated processing jobs (transcription, noise_reduction).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -24,7 +25,11 @@
       "request": {
         "method": "GET",
         "header": [],
-        "url": "{{baseUrl}}/health"
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
       }
     },
     {
@@ -33,10 +38,12 @@
         {
           "listen": "test",
           "script": {
+            "type": "text/javascript",
             "exec": [
               "if (pm.response.code === 201) {",
               "  const body = pm.response.json();",
               "  pm.collectionVariables.set('assetId', body.id);",
+              "  console.log('Saved assetId:', body.id);",
               "}"
             ]
           }
@@ -51,11 +58,16 @@
             {
               "key": "file",
               "type": "file",
-              "src": []
+              "src": null,
+              "description": "Select an audio/video file in Postman before sending. Do not leave an empty path in src."
             }
           ]
         },
-        "url": "{{baseUrl}}/assets"
+        "url": {
+          "raw": "{{baseUrl}}/assets",
+          "host": ["{{baseUrl}}"],
+          "path": ["assets"]
+        }
       }
     },
     {
@@ -63,7 +75,11 @@
       "request": {
         "method": "GET",
         "header": [],
-        "url": "{{baseUrl}}/assets/{{assetId}}"
+        "url": {
+          "raw": "{{baseUrl}}/assets/{{assetId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["assets", "{{assetId}}"]
+        }
       }
     },
     {
@@ -72,10 +88,12 @@
         {
           "listen": "test",
           "script": {
+            "type": "text/javascript",
             "exec": [
               "if (pm.response.code === 202) {",
               "  const body = pm.response.json();",
               "  pm.collectionVariables.set('jobId', body.id);",
+              "  console.log('Saved jobId:', body.id);",
               "}"
             ]
           }
@@ -93,7 +111,47 @@
           "mode": "raw",
           "raw": "{\n  \"operation\": \"transcription\"\n}"
         },
-        "url": "{{baseUrl}}/assets/{{assetId}}/process"
+        "url": {
+          "raw": "{{baseUrl}}/assets/{{assetId}}/process",
+          "host": ["{{baseUrl}}"],
+          "path": ["assets", "{{assetId}}", "process"]
+        }
+      }
+    },
+    {
+      "name": "Start processing (noise_reduction)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 202) {",
+              "  const body = pm.response.json();",
+              "  pm.collectionVariables.set('jobId', body.id);",
+              "  console.log('Saved jobId:', body.id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"operation\": \"noise_reduction\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/assets/{{assetId}}/process",
+          "host": ["{{baseUrl}}"],
+          "path": ["assets", "{{assetId}}", "process"]
+        }
       }
     },
     {
@@ -101,7 +159,11 @@
       "request": {
         "method": "GET",
         "header": [],
-        "url": "{{baseUrl}}/jobs/{{jobId}}"
+        "url": {
+          "raw": "{{baseUrl}}/jobs/{{jobId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["jobs", "{{jobId}}"]
+        }
       }
     },
     {
@@ -109,7 +171,11 @@
       "request": {
         "method": "GET",
         "header": [],
-        "url": "{{baseUrl}}/assets/{{assetId}}/jobs"
+        "url": {
+          "raw": "{{baseUrl}}/assets/{{assetId}}/jobs",
+          "host": ["{{baseUrl}}"],
+          "path": ["assets", "{{assetId}}", "jobs"]
+        }
       }
     }
   ]
